@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Kalai Creates — Short-Form Video Editor</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Mono:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet"/>
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  :root{
+    --bg:#080808;--surface:#111;--border:#222;
+    --gold:#E8A030;--gold-dim:#a87020;
+    --text:#F0EDE8;--muted:#888;--dim:#444;
+    --ff-display:'Syne',sans-serif;--ff-body:'DM Mono',monospace;
+    --radius:6px;
+  }
+  html{scroll-behavior:smooth}
+  body{background:var(--bg);color:var(--text);font-family:var(--ff-body);font-size:15px;line-height:1.7;overflow-x:hidden}
+  body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:999;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");opacity:.35}
+
+  nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;justify-content:space-between;align-items:center;padding:1.2rem 4rem;border-bottom:1px solid transparent;transition:border-color .3s,background .3s}
+  nav.scrolled{background:rgba(8,8,8,.92);backdrop-filter:blur(12px);border-color:var(--border)}
+  .nav-logo{font-family:var(--ff-display);font-size:1.1rem;font-weight:800;letter-spacing:.08em;color:var(--gold);text-decoration:none}
+  .nav-links{display:flex;gap:2rem;list-style:none}
+  .nav-links a{color:var(--muted);text-decoration:none;font-size:.8rem;letter-spacing:.12em;text-transform:uppercase;transition:color .2s}
+  .nav-links a:hover{color:var(--text)}
+
+  #hero{min-height:100vh;display:flex;flex-direction:column;justify-content:flex-end;padding:0 4rem 5rem;position:relative;overflow:hidden}
+  .hero-bg{position:absolute;inset:0;background:radial-gradient(ellipse 80% 60% at 70% 40%,rgba(232,160,48,.06) 0%,transparent 70%),linear-gradient(160deg,#0d0d0d 0%,#080808 100%)}
+
+  .phone-row{position:absolute;right:5rem;top:50%;transform:translateY(-50%);display:flex;gap:1.2rem;align-items:center}
+  .phone{width:90px;border-radius:16px;border:1.5px solid var(--border);overflow:hidden}
+  .phone.center{width:108px;margin-top:-30px;border-color:var(--gold-dim)}
+  .phone-screen{aspect-ratio:9/16;display:flex;flex-direction:column;justify-content:flex-end;padding:.6rem;position:relative}
+  .phone-screen.reel{background:linear-gradient(170deg,#1a1208 0%,#0a0a0a 100%)}
+  .phone-screen.tiktok{background:linear-gradient(170deg,#080d14 0%,#080808 100%)}
+  .phone-screen.shorts{background:linear-gradient(170deg,#140808 0%,#080808 100%)}
+  .phone-play{width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.5rem;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%)}
+  .phone-play.gold{background:rgba(232,160,48,.15);border:1px solid rgba(232,160,48,.3);color:var(--gold)}
+  .phone-play.blue{background:rgba(79,168,245,.1);border:1px solid rgba(79,168,245,.25);color:#4fa8f5}
+  .phone-play.red{background:rgba(224,48,48,.1);border:1px solid rgba(224,48,48,.25);color:#e03030}
+  .phone-bar{height:2px;border-radius:100px;margin-bottom:.3rem}
+  .phone-bar.gold{background:var(--gold);width:65%}
+  .phone-bar.blue{background:#4fa8f5;width:55%}
+  .phone-bar.red{background:#e03030;width:60%}
+  .phone-label{font-size:.42rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+  .hero-fade{position:absolute;right:0;top:0;bottom:0;width:35%;background:linear-gradient(to right,var(--bg) 0%,transparent 100%)}
+
+  .hero-tag{font-size:.7rem;letter-spacing:.25em;text-transform:uppercase;color:var(--gold);margin-bottom:1.5rem;display:flex;align-items:center;gap:.8rem;position:relative;z-index:1}
+  .hero-tag::before{content:'';width:2rem;height:1px;background:var(--gold);display:inline-block}
+  .hero-h1{font-family:var(--ff-display);font-size:clamp(3rem,6.5vw,6rem);font-weight:800;line-height:.95;letter-spacing:-.02em;position:relative;z-index:1;opacity:0;animation:fadeUp .9s .2s ease forwards}
+  .hero-h1 em{font-style:normal;color:var(--gold)}
+  .hero-sub{margin-top:1.8rem;max-width:36rem;color:var(--muted);font-size:.88rem;line-height:1.8;position:relative;z-index:1;opacity:0;animation:fadeUp .9s .45s ease forwards}
+  .platform-badges{display:flex;gap:.7rem;margin-top:1.2rem;flex-wrap:wrap;position:relative;z-index:1;opacity:0;animation:fadeUp .9s .55s ease forwards}
+  .badge{display:flex;align-items:center;gap:.4rem;padding:.35rem .9rem;border-radius:100px;font-size:.7rem;letter-spacing:.06em;border:1px solid}
+  .badge.ig{background:rgba(232,79,130,.06);border-color:rgba(232,79,130,.25);color:#e84f82}
+  .badge.tt{background:rgba(79,168,245,.06);border-color:rgba(79,168,245,.25);color:#4fa8f5}
+  .badge.yt{background:rgba(224,48,48,.06);border-color:rgba(224,48,48,.25);color:#e03030}
+  .hero-ctas{display:flex;gap:1rem;margin-top:2rem;flex-wrap:wrap;position:relative;z-index:1;opacity:0;animation:fadeUp .9s .65s ease forwards}
+
+  .btn-primary{background:var(--gold);color:#080808;padding:.8rem 2rem;border:none;border-radius:var(--radius);font-family:var(--ff-body);font-size:.8rem;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;text-decoration:none;transition:opacity .2s,transform .15s;display:inline-block}
+  .btn-primary:hover{opacity:.88;transform:translateY(-1px)}
+  .btn-ghost{background:transparent;color:var(--text);padding:.8rem 2rem;border:1px solid var(--border);border-radius:var(--radius);font-family:var(--ff-body);font-size:.8rem;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;text-decoration:none;transition:border-color .2s,color .2s;display:inline-block}
+  .btn-ghost:hover{border-color:var(--gold);color:var(--gold)}
+
+  .ticker{background:var(--gold);color:#080808;overflow:hidden;padding:.5rem 0;white-space:nowrap}
+  .ticker-inner{display:inline-flex;animation:ticker 18s linear infinite}
+  .ticker-inner span{padding:0 2rem;font-family:var(--ff-display);font-size:.85rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase}
+  .ticker-sep{color:rgba(0,0,0,.35)}
+
+  section{padding:7rem 4rem}
+  .section-label{font-size:.65rem;letter-spacing:.3em;text-transform:uppercase;color:var(--gold);margin-bottom:1rem;display:flex;align-items:center;gap:.8rem}
+  .section-label::before{content:'';width:1.5rem;height:1px;background:var(--gold)}
+  .section-h2{font-family:var(--ff-display);font-size:clamp(2rem,4vw,3.2rem);font-weight:800;line-height:1;letter-spacing:-.02em;margin-bottom:3rem}
+
+  #platforms{background:var(--surface);border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
+  .platforms-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--border)}
+  .platform-card{background:var(--surface);padding:3rem 2.5rem;transition:background .25s;display:flex;flex-direction:column;gap:1.2rem}
+  .platform-card:hover{background:#181818}
+  .plat-icon{font-size:2rem}
+  .plat-name{font-family:var(--ff-display);font-size:1.4rem;font-weight:800}
+  .plat-name.ig{color:#e84f82}
+  .plat-name.tt{color:#4fa8f5}
+  .plat-name.yt{color:#e03030}
+  .platform-card p{color:var(--muted);font-size:.82rem;line-height:1.75}
+  .plat-specs{display:flex;flex-direction:column;gap:.5rem;margin-top:.5rem}
+  .spec-row{display:flex;justify-content:space-between;font-size:.72rem;border-bottom:1px solid var(--border);padding-bottom:.4rem}
+  .spec-row:last-child{border-bottom:none;padding-bottom:0}
+  .spec-row span:first-child{color:var(--dim);text-transform:uppercase;letter-spacing:.08em}
+
+  #whatido{display:grid;grid-template-columns:1fr 1fr;gap:5rem;align-items:start}
+  .whatido-left .section-h2{margin-bottom:1.5rem}
+  .whatido-left p{color:var(--muted);font-size:.85rem;line-height:1.85;max-width:32rem}
+  .whatido-list{margin-top:2rem;display:flex;flex-direction:column;gap:.8rem}
+  .whatido-item{display:flex;align-items:flex-start;gap:1rem;padding:1rem 1.2rem;border:1px solid var(--border);border-radius:var(--radius);transition:border-color .2s,background .2s}
+  .whatido-item:hover{border-color:var(--gold-dim);background:rgba(232,160,48,.03)}
+  .wi-icon{font-size:1rem;flex-shrink:0;margin-top:.1rem}
+  .wi-text strong{display:block;color:var(--text);font-weight:400;margin-bottom:.1rem;font-size:.85rem}
+  .wi-text{font-size:.8rem;color:var(--muted)}
+
+  .skills-right .section-label{margin-bottom:2rem}
+  .skill-bars{display:flex;flex-direction:column;gap:1.3rem}
+  .skill-row label{display:flex;justify-content:space-between;font-size:.72rem;color:var(--muted);margin-bottom:.5rem;text-transform:uppercase;letter-spacing:.08em}
+  .skill-row label span{color:var(--gold)}
+  .bar-bg{height:2px;background:var(--border);border-radius:100px;overflow:hidden}
+  .bar-fill{height:100%;background:linear-gradient(90deg,var(--gold-dim),var(--gold));border-radius:100px;width:0;transition:width 1.3s ease}
+
+  #process{background:var(--surface);border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
+  .process-steps{display:grid;grid-template-columns:repeat(4,1fr);gap:0;position:relative}
+  .process-steps::before{content:'';position:absolute;top:2rem;left:0;right:0;height:1px;background:var(--border)}
+  .step{padding:4rem 1.5rem 1.5rem;position:relative}
+  .step-num{position:absolute;top:0;left:1.5rem;transform:translateY(-50%);background:var(--surface);border:1px solid var(--border);border-radius:100px;padding:.3rem .8rem;font-size:.65rem;letter-spacing:.15em;color:var(--gold);font-family:var(--ff-display);font-weight:700}
+  .step h3{font-family:var(--ff-display);font-size:1rem;font-weight:700;margin-bottom:.5rem}
+  .step p{color:var(--muted);font-size:.78rem;line-height:1.7}
+
+  #packages .packages-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem;margin-top:3rem}
+  .pkg{border:1px solid var(--border);border-radius:var(--radius);padding:2rem;display:flex;flex-direction:column;gap:1rem;position:relative;overflow:hidden;transition:border-color .25s}
+  .pkg:hover{border-color:var(--gold-dim)}
+  .pkg.featured{border-color:var(--gold)}
+  .pkg.featured::before{content:'BEST VALUE';position:absolute;top:1rem;right:1rem;background:var(--gold);color:#080808;font-size:.6rem;letter-spacing:.15em;font-family:var(--ff-display);font-weight:700;padding:.25rem .6rem;border-radius:100px}
+  .pkg-name{font-size:.65rem;letter-spacing:.25em;text-transform:uppercase;color:var(--gold)}
+  .pkg-price{font-family:var(--ff-display);font-size:2.4rem;font-weight:800;line-height:1}
+  .pkg-price sub{font-size:.95rem;font-weight:400;color:var(--muted)}
+  .pkg-tagline{color:var(--muted);font-size:.8rem}
+  .pkg-platforms{display:flex;gap:.4rem;flex-wrap:wrap}
+  .pill{background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:100px;padding:.2rem .7rem;font-size:.62rem;letter-spacing:.08em;color:var(--dim);text-transform:uppercase}
+  .pkg-divider{height:1px;background:var(--border)}
+  .pkg-features{list-style:none;display:flex;flex-direction:column;gap:.6rem}
+  .pkg-features li{font-size:.8rem;color:var(--muted);display:flex;align-items:flex-start;gap:.6rem}
+  .pkg-features li::before{content:'✓';color:var(--gold);flex-shrink:0}
+  .pkg .btn-primary,.pkg .btn-ghost{width:100%;text-align:center;margin-top:auto;display:block}
+
+  #contact{display:grid;grid-template-columns:1fr 1fr;gap:5rem;align-items:start}
+  #contact .left .section-h2{margin-bottom:1rem}
+  #contact .left p{color:var(--muted);font-size:.85rem;line-height:1.8;max-width:28rem}
+  .contact-meta{margin-top:2rem;display:flex;flex-direction:column;gap:1rem}
+  .contact-meta a{color:var(--gold);text-decoration:none;font-size:.85rem;display:flex;align-items:center;gap:.6rem;transition:opacity .2s}
+  .contact-meta a:hover{opacity:.7}
+  .contact-meta a span{color:var(--muted);font-size:.75rem;min-width:5rem}
+
+  .contact-form{display:flex;flex-direction:column;gap:1.2rem}
+  .form-group{display:flex;flex-direction:column;gap:.4rem}
+  .form-group label{font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+  .form-group input,.form-group select,.form-group textarea{background:#111;border:1px solid var(--border);border-radius:var(--radius);padding:.8rem 1rem;color:var(--text);font-family:var(--ff-body);font-size:.85rem;transition:border-color .2s;outline:none;width:100%}
+  .form-group input:focus,.form-group select:focus,.form-group textarea:focus{border-color:var(--gold)}
+  .form-group select{appearance:none;cursor:pointer}
+  .form-group textarea{resize:vertical;min-height:120px}
+  .form-row{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+  #form-success{display:none;background:rgba(232,160,48,.07);border:1px solid rgba(232,160,48,.25);border-radius:var(--radius);padding:1.2rem;font-size:.85rem;color:var(--gold)}
+
+  footer{border-top:1px solid var(--border);padding:2.5rem 4rem;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem}
+  .footer-logo{font-family:var(--ff-display);font-size:1rem;font-weight:800;color:var(--gold)}
+  footer p{font-size:.75rem;color:var(--dim)}
+  .footer-links{display:flex;gap:1.5rem;list-style:none}
+  .footer-links a{font-size:.75rem;color:var(--dim);text-decoration:none;transition:color .2s}
+  .footer-links a:hover{color:var(--gold)}
+
+  @keyframes fadeUp{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
+  @keyframes ticker{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+  .reveal{opacity:0;transform:translateY(24px);transition:opacity .7s ease,transform .7s ease}
+  .reveal.visible{opacity:1;transform:none}
+
+  @media(max-width:900px){
+    nav{padding:1rem 1.5rem}
+    section{padding:5rem 1.5rem}
+    #hero{padding:0 1.5rem 4rem}
+    .phone-row{display:none}
+    .platforms-grid{grid-template-columns:1fr}
+    #whatido{grid-template-columns:1fr}
+    #packages .packages-grid{grid-template-columns:1fr}
+    .process-steps{grid-template-columns:1fr 1fr}
+    #contact{grid-template-columns:1fr}
+    footer{padding:2rem 1.5rem;flex-direction:column;align-items:flex-start}
+    .form-row{grid-template-columns:1fr}
+  }
+</style>
+</head>
+<body>
+
+<nav id="nav">
+  <a href="#" class="nav-logo">KALAI CREATES</a>
+  <ul class="nav-links">
+    <li><a href="#platforms">Platforms</a></li>
+    <li><a href="#whatido">Skills</a></li>
+    <li><a href="#packages">Packages</a></li>
+    <li><a href="#contact">Contact</a></li>
+  </ul>
+</nav>
+
+<section id="hero">
+  <div class="hero-bg"></div>
+  <div class="phone-row">
+    <div class="phone">
+      <div class="phone-screen reel">
+        <div class="phone-play gold">▶</div>
+        <div class="phone-bar gold"></div>
+        <div class="phone-label">Reels</div>
+      </div>
+    </div>
+    <div class="phone center">
+      <div class="phone-screen tiktok">
+        <div class="phone-play blue">▶</div>
+        <div class="phone-bar blue"></div>
+        <div class="phone-label">TikTok</div>
+      </div>
+    </div>
+    <div class="phone">
+      <div class="phone-screen shorts">
+        <div class="phone-play red">▶</div>
+        <div class="phone-bar red"></div>
+        <div class="phone-label">Shorts</div>
+      </div>
+    </div>
+  </div>
+  <div class="hero-fade"></div>
+
+  <div class="hero-tag">Short-form video specialist</div>
+  <h1 class="hero-h1">Edits built<br/>to stop<br/><em>the scroll.</em></h1>
+  <p class="hero-sub">I'm Kalai — a short-form video editor who makes content that hooks in the first second and keeps viewers watching till the very end.</p>
+  <div class="platform-badges">
+    <div class="badge ig">📸 Instagram Reels</div>
+    <div class="badge tt">🎵 TikTok</div>
+    <div class="badge yt">▶ YouTube Shorts</div>
+  </div>
+  <div class="hero-ctas">
+    <a href="#contact" class="btn-primary">Start a Project</a>
+    <a href="#packages" class="btn-ghost">See Pricing</a>
+  </div>
+</section>
+
+<div class="ticker">
+  <div class="ticker-inner">
+    <span>Instagram Reels</span><span class="ticker-sep">◆</span>
+    <span>TikTok Videos</span><span class="ticker-sep">◆</span>
+    <span>YouTube Shorts</span><span class="ticker-sep">◆</span>
+    <span>Hook-First Edits</span><span class="ticker-sep">◆</span>
+    <span>Trending Transitions</span><span class="ticker-sep">◆</span>
+    <span>Auto Captions</span><span class="ticker-sep">◆</span>
+    <span>Color Grading</span><span class="ticker-sep">◆</span>
+    <span>Fast Delivery</span><span class="ticker-sep">◆</span>
+    <span>Instagram Reels</span><span class="ticker-sep">◆</span>
+    <span>TikTok Videos</span><span class="ticker-sep">◆</span>
+    <span>YouTube Shorts</span><span class="ticker-sep">◆</span>
+    <span>Hook-First Edits</span><span class="ticker-sep">◆</span>
+    <span>Trending Transitions</span><span class="ticker-sep">◆</span>
+    <span>Auto Captions</span><span class="ticker-sep">◆</span>
+    <span>Color Grading</span><span class="ticker-sep">◆</span>
+    <span>Fast Delivery</span><span class="ticker-sep">◆</span>
+  </div>
+</div>
+
+<section id="platforms">
+  <div class="reveal">
+    <div class="section-label">Platforms</div>
+    <h2 class="section-h2">Three platforms.<br/>One editor.</h2>
+  </div>
+  <div class="platforms-grid reveal">
+    <div class="platform-card">
+      <div class="plat-icon">📸</div>
+      <div class="plat-name ig">Instagram Reels</div>
+      <p>Trending audio sync, smooth transitions, aesthetic color grades, and captions — optimized to get shared and reach the Explore page.</p>
+      <div class="plat-specs">
+        <div class="spec-row"><span>Format</span><span>1080 × 1920 (9:16)</span></div>
+        <div class="spec-row"><span>Duration</span><span>Up to 90 seconds</span></div>
+        <div class="spec-row"><span>Delivery</span><span>MP4, H.264</span></div>
+      </div>
+    </div>
+    <div class="platform-card">
+      <div class="plat-icon">🎵</div>
+      <div class="plat-name tt">TikTok</div>
+      <p>Fast-paced edits, text overlays, trending sound syncs, and cut patterns built for the For You Page. Hook in the first 2 seconds, every time.</p>
+      <div class="plat-specs">
+        <div class="spec-row"><span>Format</span><span>1080 × 1920 (9:16)</span></div>
+        <div class="spec-row"><span>Duration</span><span>15 sec – 3 min</span></div>
+        <div class="spec-row"><span>Delivery</span><span>MP4, no watermark</span></div>
+      </div>
+    </div>
+    <div class="platform-card">
+      <div class="plat-icon">▶</div>
+      <div class="plat-name yt">YouTube Shorts</div>
+      <p>Punchy vertical edits with strong opens, subtitles, and pacing structured to push into the Shorts feed and boost your channel growth.</p>
+      <div class="plat-specs">
+        <div class="spec-row"><span>Format</span><span>1080 × 1920 (9:16)</span></div>
+        <div class="spec-row"><span>Duration</span><span>Under 60 seconds</span></div>
+        <div class="spec-row"><span>Delivery</span><span>MP4, up to 4K</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="whatido">
+  <div class="whatido-left reveal">
+    <div class="section-label">What I bring</div>
+    <h2 class="section-h2">Every edit has<br/>a purpose.</h2>
+    <p>Short-form is a different language — it needs sharp instincts, trend awareness, and frame-perfect timing. That's my whole focus.</p>
+    <div class="whatido-list">
+      <div class="whatido-item"><div class="wi-icon">⚡</div><div class="wi-text"><strong>Hook Engineering</strong>The first 2–3 seconds decide everything. I build edits that stop the scroll before viewers swipe away.</div></div>
+      <div class="whatido-item"><div class="wi-icon">🎵</div><div class="wi-text"><strong>Trending Audio Sync</strong>Cuts that land exactly on the beat, synced to viral sounds or your own audio.</div></div>
+      <div class="whatido-item"><div class="wi-icon">💬</div><div class="wi-text"><strong>Styled Captions</strong>Animated, bold auto-captions — positioned and styled for each platform.</div></div>
+      <div class="whatido-item"><div class="wi-icon">🎨</div><div class="wi-text"><strong>Color Grading</strong>Cinematic look or platform-native aesthetic — consistent across all your content.</div></div>
+      <div class="whatido-item"><div class="wi-icon">✂️</div><div class="wi-text"><strong>Transitions & Pacing</strong>Smash zooms, whips, glitches, smooth cuts — whatever your style needs.</div></div>
+      <div class="whatido-item"><div class="wi-icon">📦</div><div class="wi-text"><strong>Batch Editing</strong>Need 10, 20, 30 videos? Bulk packages available with fast consistent delivery.</div></div>
+    </div>
+  </div>
+  <div class="skills-right reveal">
+    <div class="section-label">My skill level</div>
+    <div class="skill-bars">
+      <div class="skill-row"><label>Video Editing <span>95%</span></label><div class="bar-bg"><div class="bar-fill" data-width="95"></div></div></div>
+      <div class="skill-row"><label>Trending Transitions <span>92%</span></label><div class="bar-bg"><div class="bar-fill" data-width="92"></div></div></div>
+      <div class="skill-row"><label>Audio Sync &amp; Beats <span>90%</span></label><div class="bar-bg"><div class="bar-fill" data-width="90"></div></div></div>
+      <div class="skill-row"><label>Color Grading <span>85%</span></label><div class="bar-bg"><div class="bar-fill" data-width="85"></div></div></div>
+      <div class="skill-row"><label>Caption Styling <span>88%</span></label><div class="bar-bg"><div class="bar-fill" data-width="88"></div></div></div>
+      <div class="skill-row"><label>Motion Graphics <span>75%</span></label><div class="bar-bg"><div class="bar-fill" data-width="75"></div></div></div>
+    </div>
+    <div style="margin-top:2rem">
+      <div style="font-size:.65rem;letter-spacing:.2em;text-transform:uppercase;color:var(--dim);margin-bottom:.8rem">Software I use</div>
+      <div style="display:flex;flex-wrap:wrap;gap:.5rem">
+        <span style="background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:var(--radius);padding:.35rem .8rem;font-size:.72rem;color:var(--muted)">DaVinci Resolve</span>
+        <span style="background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:var(--radius);padding:.35rem .8rem;font-size:.72rem;color:var(--muted)">Premiere Pro</span>
+        <span style="background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:var(--radius);padding:.35rem .8rem;font-size:.72rem;color:var(--muted)">CapCut</span>
+        <span style="background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:var(--radius);padding:.35rem .8rem;font-size:.72rem;color:var(--muted)">After Effects</span>
+        <span style="background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:var(--radius);padding:.35rem .8rem;font-size:.72rem;color:var(--muted)">Photoshop</span>
+      </div>
+      <div style="margin-top:1.2rem;border:1px solid rgba(232,160,48,.2);border-radius:var(--radius);padding:1rem 1.2rem;background:rgba(232,160,48,.04)">
+        <p style="font-size:.68rem;color:var(--gold);letter-spacing:.1em;text-transform:uppercase;margin-bottom:.25rem">Certified</p>
+        <p style="font-size:.8rem;color:var(--muted)">Blackmagic Design — DaVinci Resolve</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="process">
+  <div class="reveal">
+    <div class="section-label">How it works</div>
+    <h2 class="section-h2">Simple. Fast.<br/>No back-and-forth.</h2>
+  </div>
+  <div class="process-steps reveal">
+    <div class="step"><div class="step-num">01</div><h3>Tell Me What You Need</h3><p>Fill the form — platform, style ref, how many videos, your deadline. I reply within 24 hrs.</p></div>
+    <div class="step"><div class="step-num">02</div><h3>Send Your Footage</h3><p>Drop your raw clips via Google Drive or WeTransfer. No need to organize — I handle that.</p></div>
+    <div class="step"><div class="step-num">03</div><h3>Review the Draft</h3><p>Get a shareable preview link. Leave feedback. Up to 2 revision rounds included in all packages.</p></div>
+    <div class="step"><div class="step-num">04</div><h3>Get Your Final Video</h3><p>Exported in platform-perfect specs — ready to upload directly, no extra steps needed.</p></div>
+  </div>
+</section>
+
+<section id="packages">
+  <div class="reveal">
+    <div class="section-label">Pricing</div>
+    <h2 class="section-h2">Pick your package.</h2>
+  </div>
+  <div class="packages-grid reveal">
+    <div class="pkg">
+      <p class="pkg-name">Starter</p>
+      <p class="pkg-price">₹800<sub>/video</sub></p>
+      <p class="pkg-tagline">Clean short-form edits with quick delivery.</p>
+      <div class="pkg-platforms"><span class="pill">Reels</span><span class="pill">TikTok</span><span class="pill">Shorts</span></div>
+      <div class="pkg-divider"></div>
+      <ul class="pkg-features">
+        <li>Up to 60-second video</li>
+        <li>Basic cuts + transitions</li>
+        <li>Background music</li>
+        <li>Auto-captions</li>
+        <li>1 revision round</li>
+        <li>2-day delivery</li>
+      </ul>
+      <a href="#contact" class="btn-ghost" style="margin-top:1.5rem">Get Started</a>
+    </div>
+    <div class="pkg featured">
+      <p class="pkg-name">Pro</p>
+      <p class="pkg-price">₹1,800<sub>/video</sub></p>
+      <p class="pkg-tagline">Full platform-optimized edit with trending style.</p>
+      <div class="pkg-platforms"><span class="pill">Reels</span><span class="pill">TikTok</span><span class="pill">Shorts</span></div>
+      <div class="pkg-divider"></div>
+      <ul class="pkg-features">
+        <li>Up to 90-second video</li>
+        <li>Trending transitions + effects</li>
+        <li>Beat-synced audio cuts</li>
+        <li>Animated styled captions</li>
+        <li>Color grading</li>
+        <li>Text overlays + graphics</li>
+        <li>2 revision rounds</li>
+        <li>3-day delivery</li>
+      </ul>
+      <a href="#contact" class="btn-primary" style="margin-top:1.5rem">Get Started</a>
+    </div>
+    <div class="pkg">
+      <p class="pkg-name">Bulk Pack</p>
+      <p class="pkg-price">₹5,000<sub>/5 videos</sub></p>
+      <p class="pkg-tagline">For creators posting consistently every week.</p>
+      <div class="pkg-platforms"><span class="pill">Reels</span><span class="pill">TikTok</span><span class="pill">Shorts</span></div>
+      <div class="pkg-divider"></div>
+      <ul class="pkg-features">
+        <li>5 short-form videos</li>
+        <li>All Pro features included</li>
+        <li>Mix platforms freely</li>
+        <li>Priority turnaround</li>
+        <li>Consistent style across all</li>
+        <li>5-day delivery for full batch</li>
+      </ul>
+      <a href="#contact" class="btn-ghost" style="margin-top:1.5rem">Get Started</a>
+    </div>
+  </div>
+  <p style="margin-top:1.5rem;font-size:.78rem;color:var(--dim)">Monthly retainer available for creators posting 10+ videos/month. Message to discuss custom rates.</p>
+</section>
+
+<section id="contact">
+  <div class="left reveal">
+    <div class="section-label">Let's work</div>
+    <h2 class="section-h2">Got a project<br/>in mind?</h2>
+    <p>Fill the form and I'll respond within 24 hours. Whether you're just starting out or already growing fast — I'm here to make your content pop.</p>
+    <div class="contact-meta">
+      <a href="mailto:kalaicreates@gmail.com"><span>Email</span>kalaicreates@gmail.com</a>
+      <a href="https://fiverr.com" target="_blank"><span>Fiverr</span>fiverr.com/kalaicreates</a>
+      <a href="https://instagram.com" target="_blank"><span>Instagram</span>@kalaicreates</a>
+    </div>
+  </div>
+  <div class="right reveal">
+    <form class="contact-form" id="contactForm" onsubmit="handleSubmit(event)">
+      <div class="form-row">
+        <div class="form-group"><label>Your Name</label><input type="text" placeholder="Alex Johnson" required/></div>
+        <div class="form-group"><label>Email Address</label><input type="email" placeholder="you@email.com" required/></div>
+      </div>
+      <div class="form-group">
+        <label>Platform</label>
+        <select required>
+          <option value="" disabled selected>Which platform?</option>
+          <option>Instagram Reels</option>
+          <option>TikTok</option>
+          <option>YouTube Shorts</option>
+          <option>All three platforms</option>
+          <option>Mix (specify below)</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>No. of Videos</label>
+          <select>
+            <option value="" disabled selected>How many?</option>
+            <option>1 video</option>
+            <option>2–5 videos</option>
+            <option>5–10 videos</option>
+            <option>10+ videos</option>
+            <option>Monthly retainer</option>
+          </select>
+        </div>
+        <div class="form-group"><label>Deadline</label><input type="date"/></div>
+      </div>
+      <div class="form-group">
+        <label>Your style / vibe</label>
+        <textarea placeholder="Fast cuts? Aesthetic? Funny? Educational? Trending sounds? Drop a reference link if you have one."></textarea>
+      </div>
+      <button type="submit" class="btn-primary">Send Message →</button>
+      <div id="form-success">Message sent! I'll reply within 24 hours. Check your inbox.</div>
+    </form>
+  </div>
+</section>
+
+<footer>
+  <div class="footer-logo">KALAI CREATES</div>
+  <p>© 2025 Kalai Creates · Short-Form Video Editor · Chennai, India</p>
+  <ul class="footer-links">
+    <li><a href="#platforms">Platforms</a></li>
+    <li><a href="#packages">Packages</a></li>
+    <li><a href="#contact">Contact</a></li>
+    <li><a href="https://fiverr.com" target="_blank">Fiverr</a></li>
+  </ul>
+</footer>
+
+<script>
+  const nav=document.getElementById('nav');
+  window.addEventListener('scroll',()=>nav.classList.toggle('scrolled',window.scrollY>60));
+  const io=new IntersectionObserver(e=>e.forEach(x=>{if(x.isIntersecting)x.target.classList.add('visible')}),{threshold:.12});
+  document.querySelectorAll('.reveal').forEach(r=>io.observe(r));
+  const barIO=new IntersectionObserver(e=>{e.forEach(x=>{if(x.isIntersecting)x.target.querySelectorAll('.bar-fill').forEach(b=>b.style.width=b.dataset.width+'%')})},{threshold:.3});
+  const ws=document.getElementById('whatido');if(ws)barIO.observe(ws);
+  function handleSubmit(e){
+    e.preventDefault();
+    const btn=e.target.querySelector('button[type=submit]');
+    btn.textContent='Sending...';btn.disabled=true;
+    setTimeout(()=>{document.getElementById('contactForm').style.display='none';document.getElementById('form-success').style.display='block'},1200);
+  }
+  document.querySelectorAll('a[href^="#"]').forEach(a=>{
+    a.addEventListener('click',e=>{const t=document.querySelector(a.getAttribute('href'));if(t){e.preventDefault();t.scrollIntoView({behavior:'smooth',block:'start'})}});
+  });
+</script>
+</body>
+</html>
